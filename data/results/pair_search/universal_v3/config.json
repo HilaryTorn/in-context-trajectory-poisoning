@@ -1,0 +1,11 @@
+{
+  "mode": "universal",
+  "attacker_model": "gpt-4o",
+  "monitor_model": "qwen2.5-7b",
+  "monitor_model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+  "max_rounds": 40,
+  "dev_size": 30,
+  "promote_threshold": 0.6,
+  "seed_template": null,
+  "timestamp": "2026-03-21 19:26:25"
+}
