@@ -1,0 +1,34 @@
+# Environment
+.env
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Data (keep structure, ignore large files)
+data/traces/*.json
+data/results/*.json
+data/results/*.csv
+!data/traces/.gitkeep
+!data/results/.gitkeep
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Models cache
+*.bin
+*.safetensors
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

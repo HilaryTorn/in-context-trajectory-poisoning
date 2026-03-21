@@ -1,0 +1,9 @@
+{
+  "name": "persona_priming_v1",
+  "template": "persona_priming_v1",
+  "template_category": "persona_priming_v1",
+  "model": "qwen2.5-7b",
+  "model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+  "num_traces": 96,
+  "timestamp": "2026-03-21 10:47:25"
+}

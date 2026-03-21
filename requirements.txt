@@ -1,0 +1,16 @@
+# Agent benchmark
+agentdojo[transformers]==0.1.29
+
+# Monitor / defense
+llamafirewall>=1.0.3
+
+# Agent LLM
+openai>=1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+tqdm>=4.65.0
+jsonlines>=4.0.0
