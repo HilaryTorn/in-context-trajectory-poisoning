@@ -1,4 +1,0 @@
-pre-commit
-inspect-ai
-accelerate
-transformers==4.45.0

@@ -41,6 +41,10 @@ AVAILABLE_MODELS = {
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
     "qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct-Turbo",
     "llama-4-maverick": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+    "llama-3-8b-lite": "meta-llama/Meta-Llama-3-8B-Instruct-Lite",
+    "mistral-small-24b": "mistralai/Mistral-Small-24B-Instruct-2501",
+    "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+    "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
 }
 DEFAULT_MODEL_KEY = "qwen2.5-7b"
 

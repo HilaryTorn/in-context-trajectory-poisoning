@@ -1,9 +1,0 @@
-{
-  "name": "authoritative_normalization",
-  "template": "authoritative_normalization",
-  "template_category": "authoritative_normalization",
-  "model": "qwen2.5-7b",
-  "model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
-  "num_traces": 96,
-  "timestamp": "2026-03-21 10:45:26"
-}
