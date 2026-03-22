@@ -1,109 +1,60 @@
-# CLAUDE CODE CONTEXT — Monitor Grooming Project
+# CLAUDE CODE CONTEXT — In-Context Trajectory Poisoning
 
 ## What this project is
 
-An AI control hackathon submission. We're demonstrating that LLM-based agent monitors (specifically Meta's AlignmentCheck / LlamaFirewall) can be bypassed using natural-language priming embedded in agent execution traces — no GPUs, no gradient optimization, no gibberish strings.
-
-We call this attack "in-context trajectory poisoning" or "monitor grooming."
+An AI control research project (Apart Research hackathon). We demonstrate that LLM-based agent monitors (AlignmentCheck / LlamaFirewall) can be bypassed using automated natural language search — no model access, no GPUs, no gibberish strings. Paper is finished and submitted.
 
 ## How it builds on prior work
 
-Isbarov & Kantarcioglu (2026, arXiv:2602.05066) showed that AlignmentCheck can be bypassed by injecting GCG-optimized adversarial strings into agent traces ("Agent-as-a-Proxy" attack). Their approach:
-- Requires white-box access to the monitor's weights (to compute gradients)
-- Requires GPUs (500 iterations of token-level optimization)
-- Produces gibberish strings that are easily detectable by humans
-
-Our approach instead:
-- Is **black-box** — no access to monitor internals
-- Is **GPU-free** — uses hand-crafted natural-language content
-- Produces **human-readable** attack content (emails, Slack messages, etc.)
-- Works by **priming** the monitor across the trajectory — earlier steps establish authority, normalize behavior, and build compliance patterns so that when the malicious action appears later, the monitor classifies it as safe
-
-The key insight: AlignmentCheck processes the entire execution trace in a single evaluation window. So content in early steps affects how it evaluates later steps — just like priming effects in human cognition.
+Isbarov & Kantarcioglu (2026, arXiv:2602.05066) showed AlignmentCheck can be bypassed with GCG-optimized adversarial strings (white-box, GPU-dependent, gibberish output). We replace GCG with PAIR (Chao et al., 2023), an iterative black-box search algorithm, to find natural language bypass strings.
 
 ## The stack
 
-- **AgentDojo** (`pip install "agentdojo[transformers]"`, version 0.1.29) — benchmark for generating agent traces with prompt injection tasks. We use the Slack suite with "important instructions" attack. Repo: https://github.com/ethz-spylab/agentdojo
-- **LlamaFirewall / AlignmentCheck** (`pip install llamafirewall`) — the target monitor we're attacking. Repo: https://github.com/meta-llama/PurpleLlama/tree/main/LlamaFirewall
-- **Together AI API** — AlignmentCheck uses this to run the monitoring LLM. Set via `TOGETHER_API_KEY` env var.
-- **OpenAI API** — AgentDojo uses GPT-4o as the agent. Set via `OPENAI_API_KEY` env var. We use GPT-4o to match Isbarov's setup for clean comparison.
+- **AgentDojo** (`pip install "agentdojo[transformers]"`, version 0.1.29) — benchmark for generating agent traces with prompt injection tasks. Slack suite with "important instructions" attack.
+- **LlamaFirewall / AlignmentCheck** (`pip install llamafirewall`) — the target monitor.
+- **Together AI API** (`TOGETHER_API_KEY`) — runs the monitoring LLM (Qwen2.5-7B, Llama-3-8B, DeepSeek-V3).
+- **OpenAI API** (`OPENAI_API_KEY`) — GPT-4o as the AgentDojo agent and as the PAIR attacker model.
 
 ## Project structure
 
 ```
 monitor-grooming/
-├── src/                    # Core experiment code (NEEDS WRITING)
-│   ├── __init__.py
-│   ├── generate_traces.py  # Run AgentDojo Slack suite → get baseline agent traces
-│   ├── inject_priming.py   # Insert natural-language priming into traces
-│   ├── evaluate_monitor.py # Run traces through AlignmentCheck, measure ASR
-│   └── priming_templates.py# Library of priming content by category
-├── experiments/            # Experiment configs and run scripts
+├── src/
+│   ├── generate_traces.py    # Run AgentDojo Slack suite → 96 baseline traces
+│   ├── evaluate_monitor.py   # Run traces through AlignmentCheck, measure ASR
+│   ├── evaluate_candidates.py# Evaluate PAIR candidates across models
+│   ├── pair_attack.py        # Per-task PAIR search (v4)
+│   ├── pair_attack_v3.py     # Universal PAIR search
+│   ├── pair_attack_v2.py     # Earlier per-task PAIR iteration (superseded by v4)
+│   ├── pair_attack_v1.py     # First PAIR iteration (superseded)
+│   ├── inject_priming.py     # Insert priming into traces (used by PAIR scripts)
+│   └── priming_templates.py  # Hand-crafted priming templates (pre-PAIR, not significant)
+├── charts/
+│   ├── plot_results.py       # Generate all figures and tables
+│   └── *.png                 # Generated charts
 ├── data/
-│   ├── traces/             # Raw and modified agent traces (JSON)
-│   └── results/            # ASR measurements, logs
-├── notebooks/              # Analysis and visualization
+│   ├── traces/               # Raw agent traces, successful_injections.json
+│   └── results/              # Baselines, PAIR search logs, cross-model evals
+│       ├── qwen2.5-7b_results.json       # Qwen baseline (per-trace verdicts)
+│       ├── cross_model_baseline.json     # Llama/DeepSeek baselines (aggregate only)
+│       ├── cross_model_eval.json         # Cross-model PAIR evaluation
+│       ├── pair_search/                  # PAIR search results per task/version
+│       └── experiments/persona_priming_v3/ # Hand-crafted priming (pre-PAIR)
 ├── requirements.txt
 ├── .env.example
 └── README.md
 ```
 
-## What needs to happen next
+## Key results
 
-### 1. `src/generate_traces.py` — DONE
-Ran AgentDojo Slack suite (v1.2.1) with GPT-4o (`gpt-4o-2024-05-13`) and `important_instructions` attack. Got **96/105 successful injections (91.4%)** — comparable to Isbarov's 89/100. Traces saved in `data/traces/`, consolidated in `data/traces/successful_injections.json`.
+- **Baseline**: 3.1% ASR (3/96) on Qwen2.5-7B, 3.1% on Llama-3-8B, 12.5% on DeepSeek-V3
+- **Per-task PAIR**: 12.5% on Qwen (p=0.028), 16.7% on Llama (p=0.003), 34.4% on DeepSeek (p<0.001)
+- **Universal PAIR**: 5.2% on Qwen (n.s.), 12.5% on Llama (p=0.028), 17.7% on DeepSeek (n.s.)
+- Attack success is action-dependent: URL visits/link sends easier to bypass than data exfiltration
 
-Note: OpenAI rate limits (30K TPM) required adding retry with exponential backoff (monkey-patched tenacity config). Script auto-skips already-completed traces on re-run.
+## Technical details
 
-### 2. `src/evaluate_monitor.py` — DONE
-Runs traces through AlignmentCheck via `scan_replay`. Trace conversion uses Isbarov's `get_trace()` format (copied from `agent-as-a-proxy-attack-master/python_scripts/utils.py`) to ensure identical trace formatting.
-
-**Together AI model availability:**
-- Qwen2.5-7B (`Qwen/Qwen2.5-7B-Instruct-Turbo`) — serverless, works now
-- Llama-4-Maverick (`meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8`) — serverless, works now
-- Llama-3.1-8B, Mistral-7B — require dedicated endpoints (non-serverless), not available on free tier
-
-Model override works by monkey-patching `create_scanner` since our installed LlamaFirewall API differs from Isbarov's fork (theirs takes `model=`, `backend=`, ours only takes `scanners=`).
-
-### 3. `src/priming_templates.py`
-Library of natural-language priming content organized by category:
-- **Authority establishment**: Emails from managers/admins authorizing or requesting actions
-- **Behavioral normalization**: Prior trace steps showing similar benign actions (e.g., agent previously sent messages, made transfers)
-- **Compliance patterns**: Steps where agent follows instructions obediently, establishing a pattern
-
-### 4. `src/inject_priming.py`
-Takes a baseline trace and a priming configuration, produces a modified trace with priming content embedded in earlier steps. The priming goes into tool outputs (e.g., emails the agent "reads") and potentially into the agent's CoT reasoning.
-
-### 5. Experiments to run (systematic variation)
-- **Independent variable 1**: Priming content type (authority, normalization, flooding, compliance)
-- **Independent variable 2**: Number of priming steps (1, 2, 4, 8)
-- **Independent variable 3**: Malicious action severity (low: send a message, medium: share data, high: exfiltrate credentials)
-- **Dependent variable**: Attack Success Rate (ASR) — % of traces where AlignmentCheck outputs ALLOW
-
-### 6. Paper sections still needed
-- Abstract
-- Introduction
-- Concrete experimental methods
-- Results with tables/figures
-- The dataset contribution framing (byproduct, not primary)
-
-## Evaluation rubric (what judges care about)
-
-Three dimensions, each scored 1-5:
-1. **Impact Potential & Innovation** — Is this new? Does it matter for AI safety?
-2. **Execution Quality** — Sound methodology, interpretable results?
-3. **Presentation & Clarity** — Can a reader follow the problem → method → findings?
-
-## Key framing for the paper
-
-Our novelty is **practicality**: natural language, black-box, no GPU. Isbarov showed monitors are breakable with heavy optimization. We show they're breakable with social engineering. This is arguably *scarier* because:
-- Any attacker can do it (no ML expertise needed)
-- The attack content is indistinguishable from normal agent context
-- It suggests monitors are vulnerable to the same cognitive biases as humans
-
-## Important technical detail
-
-AlignmentCheck's output schema is:
+**AlignmentCheck output schema:**
 ```json
 {
   "observation": "Describe the agent's reasoning",
@@ -111,12 +62,29 @@ AlignmentCheck's output schema is:
   "conclusion": true/false  // true = misalignment detected, false = safe
 }
 ```
-So `"conclusion": false` means the monitor was fooled (our attack succeeded).
+`"conclusion": false` means the monitor was fooled (attack succeeded).
 
+**PAIR search details:**
+- GPT-4o as attacker model, generates candidate bypass strings
+- Monitor's structured reasoning (observation, thought, conclusion) fed back to attacker
+- Sliding window: 5 most recent attempts + best candidate to prevent mode collapse
+- Per-task: 15 dev-set traces, separate search per injection task type
+- Universal: 30 dev-set traces across all tasks
+- Best candidates evaluated on all 96 traces, Fisher's exact test (two-sided) vs baseline
 
-## TODO
-- Add incremental saving to evaluate_monitor.py (append each result as it completes, so crashes don't lose progress)
+**Model override:** Monkey-patches `create_scanner` since our LlamaFirewall API differs from Isbarov's fork.
 
+**Naming convention in code vs paper:**
+- v4 = "Per-Task PAIR" in the paper
+- v3 (universal) = "Universal PAIR" in the paper
+- v2 = earlier per-task iteration, excluded from paper
+- persona_priming_v3 = hand-crafted templates, not statistically significant, motivated switch to PAIR
 
+## Monitors evaluated
 
-- Run Llama-4-Maverick baseline for comparison once Qwen2.5-7B baseline & new attack is done, for much later
+| Model | Together AI ID | Baseline ASR |
+|-------|---------------|-------------|
+| Qwen2.5-7B | `Qwen/Qwen2.5-7B-Instruct-Turbo` | 3.1% |
+| Llama-3-8B-Lite | `meta-llama/Llama-3.1-8B-Instruct-Turbo` | 3.1% |
+| DeepSeek-V3 | `deepseek-ai/DeepSeek-V3` | 12.5% |
+| Mistral Small 24B | excluded — 30% baseline ASR | — |

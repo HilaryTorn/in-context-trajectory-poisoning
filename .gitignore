@@ -11,10 +11,7 @@ __pycache__/
 dist/
 build/
 
-# Data (keep structure, ignore large files)
-data/traces/*.json
-data/results/*.json
-data/results/*.csv
+# Data
 !data/traces/.gitkeep
 !data/results/.gitkeep
 
