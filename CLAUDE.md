@@ -85,6 +85,6 @@ in-context-trajectory-poisoning/
 | Model | Together AI ID | Baseline ASR |
 |-------|---------------|-------------|
 | Qwen2.5-7B | `Qwen/Qwen2.5-7B-Instruct-Turbo` | 3.1% |
-| Llama-3-8B-Lite | `meta-llama/Llama-3.1-8B-Instruct-Turbo` | 3.1% |
+| Llama-3-8B-Lite | `meta-llama/Meta-Llama-3-8B-Instruct-Lite` | 3.1% |
 | DeepSeek-V3 | `deepseek-ai/DeepSeek-V3` | 12.5% |
 | Mistral Small 24B | excluded — 30% baseline ASR | — |

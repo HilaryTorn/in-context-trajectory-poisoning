@@ -7,7 +7,7 @@ We demonstrate that LLM-based agent monitors (AlignmentCheck / LlamaFirewall) ca
 ## Key Results
 
 - **Per-task PAIR** achieves 12.5% ASR on Qwen2.5-7B (p=0.028), up from 3.1% baseline
-- **Cross-model transfer**: strings optimized against Qwen2.5-7B reach 16.7% on Llama-3-8B (p=0.003) and 34.4% on DeepSeek-V3 (p<0.001), with individual tasks up to 73.7%
+- **Cross-model transfer**: strings optimized against Qwen2.5-7B reach 16.7% on Llama-3-8B-Lite (p=0.003) and 34.4% on DeepSeek-V3 (p<0.001), with individual tasks up to 73.7%
 - **Action-dependent vulnerability**: tasks resembling legitimate behavior (sending links, visiting URLs) are substantially easier to bypass than data exfiltration
 - **Black-box, GPU-free, human-readable**: requires only API access and produces natural language strings undetectable by perplexity filters
 
@@ -70,7 +70,7 @@ in-context-trajectory-poisoning/
 1. **Trace generation**: Run AgentDojo Slack suite with GPT-4o and "important instructions" attack → 96 successful injection traces
 2. **Baseline ASR**: Evaluate unmodified traces through AlignmentCheck (3.1% on Qwen2.5-7B)
 3. **PAIR search**: GPT-4o iteratively generates candidate bypass strings; each is injected into traces and evaluated by AlignmentCheck; the monitor's structured reasoning is fed back to refine subsequent candidates. The universal search uses `persona_priming_v3` results (hand-crafted priming) to select a mixed-difficulty dev set
-4. **Cross-model transfer**: Evaluate best candidates on Llama-3-8B and DeepSeek-V3
+4. **Cross-model transfer**: Evaluate best candidates on Llama-3-8B-Lite and DeepSeek-V3
 5. **Statistical testing**: Compare ASRs against baseline using Fisher's exact test (two-sided)
 
 ## References
