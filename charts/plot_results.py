@@ -122,7 +122,7 @@ def make_bar_charts(data):
         sources=["baseline", "v4"],
         colors=["#9e9e9e", "#e74c3c"],
         title="Per-Task Optimization: Baseline vs Per-Task PAIR",
-        filename="per_task_asr_v4.png",
+        filename="per_task_asr_per_task_pair.png",
     )
 
     # 3. Baseline vs Universal PAIR
@@ -132,7 +132,7 @@ def make_bar_charts(data):
         sources=["baseline", "v3"],
         colors=["#9e9e9e", "#70ad47"],
         title="Universal String: Baseline vs Universal PAIR",
-        filename="per_task_asr_v3.png",
+        filename="per_task_asr_universal.png",
     )
 
 
@@ -385,7 +385,7 @@ def make_cross_model_per_task_charts():
             sources=["baseline", "v4"],
             colors=["#9e9e9e", "#e74c3c"],
             title=f"Per-Task Optimization on {model_label}: Baseline vs Per-Task PAIR",
-            filename=f"per_task_asr_v4_{model_key}.png",
+            filename=f"per_task_asr_per_task_pair_{model_key}.png",
             ylim=80,
         )
 
@@ -395,7 +395,7 @@ def make_cross_model_per_task_charts():
             sources=["baseline", "v3"],
             colors=["#9e9e9e", "#70ad47"],
             title=f"Universal String on {model_label}: Baseline vs Universal PAIR",
-            filename=f"per_task_asr_v3_{model_key}.png",
+            filename=f"per_task_asr_universal_{model_key}.png",
             ylim=80,
         )
 
@@ -521,7 +521,9 @@ def make_version_cross_model_charts():
     model_labels = ["Qwen2.5-7B", "Llama-3-8B-Lite", "DeepSeek-V3"]
     model_keys = ["qwen2.5-7b", "llama-3-8b-lite", "deepseek-v3"]
 
+    version_filenames = {"v4": "per_task_pair", "v3": "universal"}
     for version, label, color in [("v4", "Per-Task PAIR", "#e74c3c"), ("v3", "Universal PAIR", "#70ad47")]:
+        vname = version_filenames[version]
         baselines, primed = _get_version_asr_per_model(version)
 
         bl_asrs = [baselines[m][0] / baselines[m][1] if baselines[m][1] else 0 for m in model_keys]
@@ -551,9 +553,9 @@ def make_version_cross_model_charts():
         ax.spines["right"].set_visible(False)
 
         plt.tight_layout()
-        plt.savefig(OUTPUT_DIR / f"cross_model_{version}.png", dpi=200)
+        plt.savefig(OUTPUT_DIR / f"cross_model_{vname}.png", dpi=200)
         plt.close()
-        print(f"Saved cross_model_{version}.png")
+        print(f"Saved cross_model_{vname}.png")
 
         # Table + significance test
         csv_lines = ["Model,Baseline,Baseline_n," + label + "," + label + "_n,p_value,Significant"]
@@ -575,7 +577,7 @@ def make_version_cross_model_charts():
             print(f"{ml:<22} {bl_asr:>6.1%} ({bl_a}/{bl_t}) {pr_asr:>6.1%} ({pr_a}/{pr_t}) {p:>10.4f} {sig:>6}")
             csv_lines.append(f"{ml},{bl_asr:.1%} ({bl_a}/{bl_t}),{bl_t},{pr_asr:.1%} ({pr_a}/{pr_t}),{pr_t},{p:.6f},{sig.strip()}")
 
-        csv_path = OUTPUT_DIR / f"cross_model_{version}_table.csv"
+        csv_path = OUTPUT_DIR / f"cross_model_{vname}_table.csv"
         with open(csv_path, "w") as f:
             f.write("\n".join(csv_lines))
         print(f"Saved {csv_path}\n")
@@ -786,7 +788,9 @@ def make_cross_model_per_task_breakdown():
     for mk in ["llama-3-8b-lite", "deepseek-v3"]:
         cross_model_data[mk] = load_cross_model_data(mk)
 
+    version_filenames = {"v4": "per_task_pair", "v3": "universal"}
     for version, version_label in [("v4", "Per-Task PAIR"), ("v3", "Universal PAIR")]:
+        vname = version_filenames[version]
         n_tasks = len(tasks)
         n_groups = len(model_keys) * 2  # baseline + primed per model
         x = np.arange(n_tasks)
@@ -836,7 +840,7 @@ def make_cross_model_per_task_breakdown():
         ax.spines["right"].set_visible(False)
 
         plt.tight_layout()
-        filename = f"cross_model_per_task_{version}.png"
+        filename = f"cross_model_per_task_{vname}.png"
         plt.savefig(OUTPUT_DIR / filename, dpi=200)
         plt.close()
         print(f"Saved {filename}")
@@ -876,9 +880,9 @@ def make_cross_model_per_task_breakdown():
     ax.spines["right"].set_visible(False)
     ax.legend(fontsize=8, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.15))
     plt.tight_layout(rect=[0, 0.1, 1, 1])
-    plt.savefig(OUTPUT_DIR / "cross_model_per_task_v4_lines.png", dpi=200)
+    plt.savefig(OUTPUT_DIR / "cross_model_per_task_per_task_pair_lines.png", dpi=200)
     plt.close()
-    print("Saved cross_model_per_task_v4_lines.png")
+    print("Saved cross_model_per_task_per_task_pair_lines.png")
 
 
 if __name__ == "__main__":
