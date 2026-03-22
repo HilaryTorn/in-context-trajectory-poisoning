@@ -44,13 +44,13 @@ llamafirewall configure
 ## Project Structure
 
 ```
-monitor-grooming/
+in-context-trajectory-poisoning/
 ├── src/
 │   ├── generate_traces.py   # Run AgentDojo Slack suite → baseline agent traces
 │   ├── evaluate_monitor.py  # Run traces through AlignmentCheck, measure ASR
 │   ├── evaluate_candidates.py # Evaluate PAIR candidates across models
-│   ├── pair_attack.py       # Per-task PAIR search (v4)
-│   ├── pair_attack_v3.py    # Universal PAIR search
+│   ├── pair_attack.py       # Per-task PAIR search
+│   ├── pair_attack_universal.py # Universal PAIR search
 │   ├── priming_templates.py # Hand-crafted priming templates (pre-PAIR)
 │   └── inject_priming.py   # Insert priming into traces
 ├── charts/

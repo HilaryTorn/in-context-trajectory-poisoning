@@ -18,13 +18,13 @@ Isbarov & Kantarcioglu (2026, arXiv:2602.05066) showed AlignmentCheck can be byp
 ## Project structure
 
 ```
-monitor-grooming/
+in-context-trajectory-poisoning/
 ├── src/
 │   ├── generate_traces.py    # Run AgentDojo Slack suite → 96 baseline traces
 │   ├── evaluate_monitor.py   # Run traces through AlignmentCheck, measure ASR
 │   ├── evaluate_candidates.py# Evaluate PAIR candidates across models
 │   ├── pair_attack.py        # Per-task PAIR search (v4)
-│   ├── pair_attack_v3.py     # Universal PAIR search
+│   ├── pair_attack_universal.py     # Universal PAIR search
 │   ├── pair_attack_v2.py     # Earlier per-task PAIR iteration (superseded by v4)
 │   ├── pair_attack_v1.py     # First PAIR iteration (superseded)
 │   ├── inject_priming.py     # Insert priming into traces (used by PAIR scripts)
