@@ -1,0 +1,14 @@
+{
+  "injection_task": "injection_task_3",
+  "attacker_model": "gpt-4o",
+  "monitor_model": "qwen2.5-7b",
+  "monitor_model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+  "branch_factor": 4,
+  "keep_top_k": 4,
+  "max_depth": 10,
+  "num_fresh_seeds": 3,
+  "early_stop_patience": 3,
+  "promote_threshold": 0.6,
+  "no_pair_seed": false,
+  "timestamp": "2026-04-07 20:12:35"
+}
