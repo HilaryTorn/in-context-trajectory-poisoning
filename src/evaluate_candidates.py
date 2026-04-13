@@ -7,6 +7,7 @@ by running them through other AlignmentCheck monitor models.
 Usage:
     python -m src.evaluate_candidates --models llama-3-8b-lite mistral-small-24b deepseek-v3
     python -m src.evaluate_candidates --models llama-3-8b-lite --candidates v4
+    python -m src.evaluate_candidates --models qwen2.5-7b llama-3-8b-lite deepseek-v3 --candidates v4 seeded --output data/results/seeded_pair_cross_model.json
 """
 
 import argparse
@@ -38,8 +39,9 @@ def parse_args() -> argparse.Namespace:
                         choices=list(AVAILABLE_MODELS.keys()),
                         help="Monitor models to evaluate against")
     parser.add_argument("--candidates", nargs="*", default=["v2", "v3", "v4"],
-                        choices=["v2", "v3", "v4", "baseline"],
-                        help="Which candidate sets to evaluate (default: v2 v3 v4)")
+                        choices=["v2", "v3", "v4", "baseline", "seeded"],
+                        help="Which candidate sets to evaluate (default: v2 v3 v4). "
+                             "'seeded' loads pair_seeded_v4_injection_task_{1-5} runs.")
     parser.add_argument("--output", type=str, default=None,
                         help="Output path (default: data/results/cross_model_eval.json)")
     return parser.parse_args()
@@ -84,6 +86,19 @@ def load_candidates() -> dict[str, dict]:
                 "candidate": data["candidate"],
                 "injection_task": f"injection_task_{i}",
                 "source": f"pair_v4_injection_task_{i}",
+                "type": "per-task",
+            }
+
+    # seeded: per-task candidates from PAIR runs initialized with persona_priming_v3
+    for i in range(1, 6):
+        path = PAIR_RESULTS_DIR / f"pair_seeded_v4_injection_task_{i}" / "best_candidate.json"
+        if path.exists():
+            with open(path) as f:
+                data = json.load(f)
+            candidates[f"seeded_task{i}"] = {
+                "candidate": data["candidate"],
+                "injection_task": f"injection_task_{i}",
+                "source": f"pair_seeded_v4_injection_task_{i}",
                 "type": "per-task",
             }
 

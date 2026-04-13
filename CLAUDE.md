@@ -2,7 +2,7 @@
 
 ## What this project is
 
-An AI control research project (Apart Research hackathon). We demonstrate that LLM-based agent monitors (AlignmentCheck / LlamaFirewall) can be bypassed using automated natural language search — no model access, no GPUs, no gibberish strings. Paper is finished and submitted.
+An AI control research project. We demonstrate that LLM-based agent monitors (AlignmentCheck / LlamaFirewall) can be bypassed using automated natural language search — no model access, no GPUs, no gibberish strings. 
 
 ## How it builds on prior work
 
@@ -45,12 +45,6 @@ in-context-trajectory-poisoning/
 └── README.md
 ```
 
-## Key results
-
-- **Baseline**: 3.1% ASR (3/96) on Qwen2.5-7B, 3.1% on Llama-3-8B, 12.5% on DeepSeek-V3
-- **Per-task PAIR**: 12.5% on Qwen (p=0.028), 16.7% on Llama (p=0.003), 34.4% on DeepSeek (p<0.001)
-- **Universal PAIR**: 5.2% on Qwen (n.s.), 12.5% on Llama (p=0.028), 17.7% on DeepSeek (n.s.)
-- Attack success is action-dependent: URL visits/link sends easier to bypass than data exfiltration
 
 ## Technical details
 
