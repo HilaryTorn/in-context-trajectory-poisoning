@@ -802,8 +802,9 @@ def _git_info() -> tuple[str | None, bool | None]:
 
 def _pkg_version(mod_name: str) -> str:
     try:
-        mod = __import__(mod_name)
-        return getattr(mod, "__version__", "unknown")
+        from importlib.metadata import version
+
+        return version(mod_name)
     except Exception:
         return "unknown"
 

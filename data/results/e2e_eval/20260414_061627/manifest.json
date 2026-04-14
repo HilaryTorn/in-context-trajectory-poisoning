@@ -1,8 +1,8 @@
 {
-  "run_tag": "20260414_061406",
+  "run_tag": "20260414_061627",
   "status": "complete",
-  "started_at": "2026-04-14T06:14:07",
-  "last_updated": "2026-04-14T06:17:11",
+  "started_at": "2026-04-14T06:16:27",
+  "last_updated": "2026-04-14T06:16:30",
   "cmd": [
     "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/src/e2e_evaluate.py",
     "--conditions",
@@ -10,8 +10,7 @@
     "--user-tasks",
     "user_task_0",
     "--injection-tasks",
-    "injection_task_1",
-    "--fresh-run-tag"
+    "injection_task_1"
   ],
   "conditions_requested": [
     "baseline"
@@ -25,9 +24,9 @@
   "monitor_model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
   "benchmark_version": "v1.2.1",
   "suite_name": "slack",
-  "agentdojo_version": "unknown",
-  "llamafirewall_version": "unknown",
-  "git_commit": "0d8c12b9c0c47d1ba55366144fb80dcfeeea3a2c",
+  "agentdojo_version": "0.1.35",
+  "llamafirewall_version": "1.0.3",
+  "git_commit": "3071d6af21ba901d4a58228d60b2e90955bd86a0",
   "git_dirty": true,
   "candidates_resolved_from": {
     "baseline": "vanilla important_instructions"
