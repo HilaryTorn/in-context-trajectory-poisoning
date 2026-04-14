@@ -49,6 +49,9 @@ PAIR_SEARCH_DIR = REPO_ROOT / "data" / "results" / "pair_search"
 TAP_SEARCH_DIR = REPO_ROOT / "data" / "results" / "tap_search"
 E2E_TRACES_DIR = REPO_ROOT / "data" / "traces" / "e2e"
 E2E_RESULTS_DIR = REPO_ROOT / "data" / "results" / "e2e_eval"
+SUCCESSFUL_INJECTIONS_PATH = (
+    REPO_ROOT / "data" / "traces" / "successful_injections.json"
+)
 
 BENCHMARK_VERSION = "v1.2.1"
 SUITE_NAME = "slack"
@@ -671,6 +674,210 @@ def _aggregate_condition(
     }
 
 
+def _load_96_subset_keys() -> set[tuple[str, str]] | None:
+    """Return the (user_task, injection_task) pairs in successful_injections.json.
+    Returns None if the file is missing (pipeline still runs, 96-subset view is
+    just omitted from reports)."""
+    if not SUCCESSFUL_INJECTIONS_PATH.exists():
+        return None
+    try:
+        traces = json.loads(SUCCESSFUL_INJECTIONS_PATH.read_text())
+    except json.JSONDecodeError:
+        return None
+    return {(t["user_task_id"], t["injection_task_id"]) for t in traces}
+
+
+def _per_task_cell(per_trace: list[dict], task_id: str, subset_keys) -> tuple[int, int]:
+    """Return (num_allowed_and_security, num_security) for one injection task."""
+    rows = [r for r in per_trace if r["injection_task_id"] == task_id]
+    if subset_keys is not None:
+        rows = [
+            r for r in rows if (r["user_task_id"], r["injection_task_id"]) in subset_keys
+        ]
+    n_sec = sum(1 for r in rows if r["injection_success"])
+    n_byp = sum(
+        1
+        for r in rows
+        if r["injection_success"] and r["decision"] == "allow"
+    )
+    return n_byp, n_sec
+
+
+def _per_task_aggregate(
+    per_trace: list[dict], subset_keys
+) -> tuple[int, int, int]:
+    """Return (num_allowed_and_security, num_security, num_total) over all tasks."""
+    rows = per_trace
+    if subset_keys is not None:
+        rows = [
+            r for r in rows if (r["user_task_id"], r["injection_task_id"]) in subset_keys
+        ]
+    n_total = len(rows)
+    n_sec = sum(1 for r in rows if r["injection_success"])
+    n_byp = sum(
+        1
+        for r in rows
+        if r["injection_success"] and r["decision"] == "allow"
+    )
+    return n_byp, n_sec, n_total
+
+
+def _fmt_cond_byp(n_byp: int, n_sec: int) -> str:
+    if n_sec == 0:
+        return "n/a"
+    return f"{n_byp / n_sec:.1%} ({n_byp}/{n_sec})"
+
+
+def build_per_task_report(
+    run_dir: Path, conditions: list[str]
+) -> tuple[str, str]:
+    """Build (printable_text, markdown) per-task breakdown across conditions.
+
+    Loads each {condition}.json from run_dir. Silently skips conditions whose
+    file is missing (useful for partial runs). Produces both the full and
+    96-subset views so the caller can compare against simulated-eval numbers.
+    """
+    subset_keys = _load_96_subset_keys()
+    have_subset = subset_keys is not None
+
+    data: dict[str, list[dict]] = {}
+    for c in conditions:
+        path = run_dir / f"{c}.json"
+        if not path.exists():
+            continue
+        d = json.loads(path.read_text())
+        data[c] = d.get("per_trace", [])
+
+    present = [c for c in conditions if c in data]
+    if not present:
+        return "(no condition results found)", "(no condition results found)\n"
+
+    # Printable (stdout) layout — compact columns
+    col_w = 17
+    lines_full: list[str] = []
+    lines_sub: list[str] = []
+
+    def header(label: str, use_subset: bool) -> list[str]:
+        out = [f"Per-injection-task conditional bypass — {label}"]
+        row = f"{'task':<18}"
+        for c in present:
+            row += f"  {c:>{col_w}}"
+        out.append(row)
+        out.append("-" * len(row))
+        return out
+
+    def task_rows(use_subset: bool) -> list[str]:
+        sub = subset_keys if use_subset else None
+        rows: list[str] = []
+        for task in INJECTION_TASKS:
+            line = f"{task:<18}"
+            for c in present:
+                n_byp, n_sec = _per_task_cell(data[c], task, sub)
+                line += f"  {_fmt_cond_byp(n_byp, n_sec):>{col_w}}"
+            rows.append(line)
+        # Aggregate rows
+        inj_row = f"{'injection_rate':<18}"
+        cb_row = f"{'cond_bypass':<18}"
+        e2e_row = f"{'e2e_asr':<18}"
+        for c in present:
+            n_byp, n_sec, n_total = _per_task_aggregate(data[c], sub)
+            inj_cell = (
+                f"{n_sec / n_total:.1%} ({n_sec}/{n_total})" if n_total else "n/a"
+            )
+            cb_cell = _fmt_cond_byp(n_byp, n_sec)
+            e2e_cell = (
+                f"{n_byp / n_total:.1%} ({n_byp}/{n_total})" if n_total else "n/a"
+            )
+            inj_row += f"  {inj_cell:>{col_w}}"
+            cb_row += f"  {cb_cell:>{col_w}}"
+            e2e_row += f"  {e2e_cell:>{col_w}}"
+        return rows + ["", inj_row, cb_row, e2e_row]
+
+    lines_full.extend(header("FULL (105 pairs)", False))
+    lines_full.extend(task_rows(False))
+
+    if have_subset:
+        lines_sub.extend(
+            header("96-SUBSET (apples-to-apples with simulated)", True)
+        )
+        lines_sub.extend(task_rows(True))
+
+    printable = "\n".join(lines_full)
+    if have_subset:
+        printable += "\n\n" + "\n".join(lines_sub)
+
+    # Markdown layout
+    md_lines: list[str] = ["# Per-injection-task breakdown", ""]
+
+    def md_table(use_subset: bool) -> list[str]:
+        sub = subset_keys if use_subset else None
+        hdr = "| task | " + " | ".join(present) + " |"
+        sep = "|------|" + "|".join(["-------"] * len(present)) + "|"
+        out = [hdr, sep]
+        for task in INJECTION_TASKS:
+            cells = []
+            for c in present:
+                n_byp, n_sec = _per_task_cell(data[c], task, sub)
+                cells.append(_fmt_cond_byp(n_byp, n_sec))
+            out.append(f"| {task} | " + " | ".join(cells) + " |")
+        # Aggregate row
+        agg_cells: list[str] = []
+        for c in present:
+            n_byp, n_sec, _ = _per_task_aggregate(data[c], sub)
+            agg_cells.append(f"**{_fmt_cond_byp(n_byp, n_sec)}**")
+        out.append(f"| **aggregate** | " + " | ".join(agg_cells) + " |")
+        return out
+
+    md_lines.append("## Full (105 pairs)")
+    md_lines.append("")
+    md_lines.extend(md_table(False))
+    md_lines.append("")
+    if have_subset:
+        md_lines.append("## 96-subset (apples-to-apples with simulated eval)")
+        md_lines.append("")
+        md_lines.append(
+            "Restricted to pairs in `data/traces/successful_injections.json`. "
+            "Denominator in each cell is `num_security_true` for that cell's "
+            "(injection_task × condition)."
+        )
+        md_lines.append("")
+        md_lines.extend(md_table(True))
+        md_lines.append("")
+
+    md_lines.append("## Injection-success + e2e-asr by condition")
+    md_lines.append("")
+    md_lines.append("| condition | view | inj_rate | cond_byp | e2e_asr |")
+    md_lines.append("|-----------|------|----------|----------|---------|")
+    for c in present:
+        for label, use_sub in (("full", False), ("96-subset", True)):
+            if use_sub and not have_subset:
+                continue
+            sub = subset_keys if use_sub else None
+            n_byp, n_sec, n_total = _per_task_aggregate(data[c], sub)
+            inj = (
+                f"{n_sec / n_total:.1%} ({n_sec}/{n_total})" if n_total else "n/a"
+            )
+            cb = _fmt_cond_byp(n_byp, n_sec)
+            e2e = (
+                f"{n_byp / n_total:.1%} ({n_byp}/{n_total})" if n_total else "n/a"
+            )
+            md_lines.append(
+                f"| {c} | {label} | {inj} | {cb} | {e2e} |"
+            )
+    md_lines.append("")
+    markdown = "\n".join(md_lines)
+
+    return printable, markdown
+
+
+def write_per_task_report(run_dir: Path, conditions: list[str]) -> Path:
+    """Build the per-task report and save as per_task_report.md in run_dir."""
+    _, markdown = build_per_task_report(run_dir, conditions)
+    out_path = run_dir / "per_task_report.md"
+    out_path.write_text(markdown)
+    return out_path
+
+
 def evaluate_condition_traces(
     condition_name: str,
     agent_results: dict[tuple[str, str], dict],
@@ -1045,8 +1252,52 @@ def run_full_pipeline(args: argparse.Namespace) -> int:
         nv = s.get("num_valid", 0)
         fmt = lambda x: f"{x:>9.1%}" if x is not None else "     n/a "
         print(f"{condition:<14} {fmt(inj)} {fmt(byp)} {fmt(asr)} {nv:>8}")
+    # Per-task report (prints + writes markdown)
+    try:
+        printable, _ = build_per_task_report(run_dir, args.conditions)
+        print()
+        print(printable)
+        report_path = write_per_task_report(run_dir, args.conditions)
+        print(f"\nPer-task report: {report_path}")
+    except Exception as e:
+        print(f"\n(per-task report skipped: {type(e).__name__}: {e})")
+
     print()
     print(f"Artifacts under {run_dir}")
+    return 0
+
+
+def run_report_only(args: argparse.Namespace) -> int:
+    """Build the per-task report for an existing run_tag without re-running."""
+    run_tag = args.run_tag
+    if run_tag is None:
+        # Default: most recent run_tag dir with any {condition}.json in it
+        if not E2E_RESULTS_DIR.exists():
+            print(f"No runs found in {E2E_RESULTS_DIR}")
+            return 1
+        candidates = sorted(
+            [p for p in E2E_RESULTS_DIR.iterdir() if p.is_dir()],
+            key=lambda p: p.name,
+            reverse=True,
+        )
+        for path in candidates:
+            if any((path / f"{c}.json").exists() for c in CONDITIONS):
+                run_tag = path.name
+                break
+        if run_tag is None:
+            print("No run_tag with condition results found")
+            return 1
+
+    run_dir = E2E_RESULTS_DIR / run_tag
+    if not run_dir.exists():
+        print(f"run_tag dir not found: {run_dir}")
+        return 1
+
+    printable, _ = build_per_task_report(run_dir, args.conditions)
+    print(f"\nrun_tag={run_tag}\n")
+    print(printable)
+    report_path = write_per_task_report(run_dir, args.conditions)
+    print(f"\nPer-task report: {report_path}")
     return 0
 
 
@@ -1102,6 +1353,12 @@ def parse_args() -> argparse.Namespace:
         "live: Phase 0b exercise the real AgentDojo env loader. "
         "Both skip the full pipeline and make no API calls.",
     )
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="Skip agent + monitor runs; rebuild the per-task report for an "
+        "existing run_tag (defaults to the most recent one with results).",
+    )
     return parser.parse_args()
 
 
@@ -1113,6 +1370,9 @@ def main() -> None:
 
     if args.dry_run == "live":
         sys.exit(dry_run_live(args.conditions))
+
+    if args.report_only:
+        sys.exit(run_report_only(args))
 
     sys.exit(run_full_pipeline(args))
 

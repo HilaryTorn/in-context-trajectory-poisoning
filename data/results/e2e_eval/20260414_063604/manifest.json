@@ -2,7 +2,7 @@
   "run_tag": "20260414_063604",
   "status": "complete",
   "started_at": "2026-04-14T06:36:04",
-  "last_updated": "2026-04-14T06:52:39",
+  "last_updated": "2026-04-14T08:09:20",
   "cmd": [
     "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/src/e2e_evaluate.py",
     "--conditions",
@@ -13,7 +13,10 @@
     "baseline"
   ],
   "conditions_complete": [
-    "baseline"
+    "baseline",
+    "persona_v3",
+    "seeded_pair",
+    "tap"
   ],
   "agent_model": "gpt-4o-2024-05-13",
   "agent_pipeline_name": "gpt-4o-2024-05-13",
