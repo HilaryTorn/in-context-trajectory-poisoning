@@ -1,0 +1,48 @@
+{
+  "run_tag": "20260414_172929",
+  "status": "complete",
+  "started_at": "2026-04-14T17:29:29",
+  "last_updated": "2026-04-14T18:48:25",
+  "cmd": [
+    "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/src/e2e_evaluate.py",
+    "--fresh-run-tag",
+    "--conditions",
+    "tap",
+    "seeded_pair",
+    "--force-rerun"
+  ],
+  "conditions_requested": [
+    "tap",
+    "seeded_pair"
+  ],
+  "conditions_complete": [
+    "seeded_pair",
+    "tap"
+  ],
+  "agent_model": "gpt-4o-2024-05-13",
+  "agent_pipeline_name": "gpt-4o-2024-05-13",
+  "monitor_model_key": "qwen2.5-7b",
+  "monitor_model_name": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+  "benchmark_version": "v1.2.1",
+  "suite_name": "slack",
+  "agentdojo_version": "0.1.35",
+  "llamafirewall_version": "1.0.3",
+  "git_commit": "99d7acd49bc2fc819826800b891685e8cb04fba0",
+  "git_dirty": false,
+  "candidates_resolved_from": {
+    "tap": {
+      "injection_task_1": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/tap_search/tap_injection_task_1_1775671098/best_candidate.json",
+      "injection_task_2": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/tap_search/tap_injection_task_2_1775680059/best_candidate.json",
+      "injection_task_3": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/tap_search/tap_injection_task_3_1775655194/best_candidate.json",
+      "injection_task_4": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/tap_search/tap_injection_task_4_1775692518/best_candidate.json",
+      "injection_task_5": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/tap_search/tap_injection_task_5_1775665379/best_candidate.json"
+    },
+    "seeded_pair": {
+      "injection_task_1": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/pair_search/pair_seeded_v4_injection_task_1/best_candidate.json",
+      "injection_task_2": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/pair_search/pair_seeded_v4_injection_task_2/best_candidate.json",
+      "injection_task_3": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/pair_search/pair_seeded_v4_injection_task_3/best_candidate.json",
+      "injection_task_4": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/pair_search/pair_seeded_v4_injection_task_4/best_candidate.json",
+      "injection_task_5": "/Users/hilarytorn/01Git/in-context-trajectory-poisoning/data/results/pair_search/pair_seeded_v4_injection_task_5/best_candidate.json"
+    }
+  }
+}

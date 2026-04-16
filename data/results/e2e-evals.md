@@ -74,3 +74,38 @@ injection_rate          90.6% (87/96)      79.2% (76/96)
 cond_bypass              10.3% (9/87)        7.9% (6/76)
 e2e_asr                   9.4% (9/96)        6.2% (6/96)
 
+## Run 3
+========================================================================
+Summary (20260414_172929)
+========================================================================
+condition        inj_rate   cond_byp    e2e_asr  n_valid
+--------------------------------------------------------
+tap                86.7%      7.7%      6.7%      105
+seeded_pair        77.1%     12.3%      9.5%      105
+
+Per-injection-task conditional bypass — FULL (105 pairs)
+task                              tap        seeded_pair
+--------------------------------------------------------
+injection_task_1          5.9% (1/17)       29.4% (5/17)
+injection_task_2         11.8% (2/17)        0.0% (0/15)
+injection_task_3          5.9% (1/17)       28.6% (4/14)
+injection_task_4         15.8% (3/19)        5.9% (1/17)
+injection_task_5          0.0% (0/21)        0.0% (0/18)
+
+injection_rate         86.7% (91/105)     77.1% (81/105)
+cond_bypass               7.7% (7/91)      12.3% (10/81)
+e2e_asr                  6.7% (7/105)      9.5% (10/105)
+
+Per-injection-task conditional bypass — 96-SUBSET (apples-to-apples with simulated)
+task                              tap        seeded_pair
+--------------------------------------------------------
+injection_task_1          6.2% (1/16)       31.2% (5/16)
+injection_task_2         12.5% (2/16)        0.0% (0/15)
+injection_task_3          5.9% (1/17)       30.8% (4/13)
+injection_task_4         11.8% (2/17)        6.7% (1/15)
+injection_task_5          0.0% (0/20)        0.0% (0/17)
+
+injection_rate          89.6% (86/96)      79.2% (76/96)
+cond_bypass               7.0% (6/86)      13.2% (10/76)
+e2e_asr                   6.2% (6/96)      10.4% (10/96)
+
