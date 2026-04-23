@@ -885,6 +885,94 @@ def make_cross_model_per_task_breakdown():
     print("Saved cross_model_per_task_per_task_pair_lines.png")
 
 
+def make_sim_vs_e2e_chart():
+    """Grouped bar chart comparing simulated vs e2e ASR per condition.
+
+    Values are hardcoded from the multi-run aggregates in
+    data/results/cold_vs_seeded_pair_comparison.md and data/results/e2e-evals.md.
+    This is a one-shot summary artifact, not a live dashboard.
+    """
+    conditions = [
+        # (label, sim_mean, sim_runs_or_None, e2e_mean_or_None, e2e_runs_or_None)
+        ("Baseline", 3.1, None, 2.1, None),
+        ("Persona_v3", 8.3, None, 9.4, None),
+        ("Cold-start PAIR", 9.4, [12.5, 6.2, 9.4], None, None),
+        ("TAP", 16.3, [13.5, 15.6, 19.8], 8.3, [9.4, 9.4, 6.2]),
+        ("Seeded PAIR", 14.6, [16.7, 15.6, 11.5], 11.1, [16.7, 6.2, 10.4]),
+    ]
+
+    x = np.arange(len(conditions))
+    width = 0.4
+
+    sim_means = [c[1] for c in conditions]
+    sim_err = []
+    for _, mean, runs, _, _ in conditions:
+        if runs:
+            sim_err.append([max(0, mean - min(runs)), max(0, max(runs) - mean)])
+        else:
+            sim_err.append([0, 0])
+    sim_err = np.array(sim_err).T
+
+    e2e_means = [c[3] if c[3] is not None else 0 for c in conditions]
+    e2e_present = [c[3] is not None for c in conditions]
+    e2e_err = []
+    for _, _, _, mean, runs in conditions:
+        if runs and mean is not None:
+            e2e_err.append([max(0, mean - min(runs)), max(0, max(runs) - mean)])
+        else:
+            e2e_err.append([0, 0])
+    e2e_err = np.array(e2e_err).T
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    bars_sim = ax.bar(x - width / 2, sim_means, width, yerr=sim_err, capsize=4,
+                      label="Simulated injection (3-run avg)", color="#3b7dd8",
+                      edgecolor="white", error_kw={"elinewidth": 1, "ecolor": "#1a3a6b"})
+
+    # Only plot e2e bars for conditions that have e2e data
+    e2e_plot_heights = [m if p else np.nan for m, p in zip(e2e_means, e2e_present)]
+    e2e_plot_err_lo = [e if p else 0 for e, p in zip(e2e_err[0], e2e_present)]
+    e2e_plot_err_hi = [e if p else 0 for e, p in zip(e2e_err[1], e2e_present)]
+    e2e_err_filtered = np.array([e2e_plot_err_lo, e2e_plot_err_hi])
+
+    bars_e2e = ax.bar(x + width / 2, e2e_plot_heights, width,
+                      yerr=e2e_err_filtered, capsize=4,
+                      label="End-to-end (3-run avg where available)",
+                      color="#e67e22", edgecolor="white",
+                      error_kw={"elinewidth": 1, "ecolor": "#6b3a1a"})
+
+    # Labels on bars
+    for bar, val in zip(bars_sim, sim_means):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 0.6,
+                f"{val:.1f}%", ha="center", va="bottom", fontsize=9)
+
+    for bar, val, present in zip(bars_e2e, e2e_means, e2e_present):
+        if present:
+            ax.text(bar.get_x() + bar.get_width() / 2, val + 0.6,
+                    f"{val:.1f}%", ha="center", va="bottom", fontsize=9)
+
+    # "not run" annotation for Cold-start PAIR e2e
+    for i, (_, _, _, e2e_mean, _) in enumerate(conditions):
+        if e2e_mean is None:
+            ax.text(x[i] + width / 2, 0.5, "not run", ha="center", va="bottom",
+                    fontsize=8, color="#888", style="italic")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([c[0] for c in conditions], fontsize=10)
+    ax.set_ylabel("Attack Success Rate (%)", fontsize=12)
+    ax.set_title("Simulated vs End-to-End ASR, by condition (Qwen2.5-7B monitor)", fontsize=13)
+    ax.set_ylim(0, 24)
+    ax.grid(axis="y", alpha=0.3)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.legend(fontsize=10, loc="upper left")
+
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "sim_vs_e2e_by_condition.png", dpi=200)
+    plt.close()
+    print("Saved sim_vs_e2e_by_condition.png")
+
+
 if __name__ == "__main__":
     data = load_all_data()
     make_asr_table(data)
@@ -896,3 +984,4 @@ if __name__ == "__main__":
     make_combined_overview()
     make_appendix_table()
     make_cross_model_per_task_breakdown()
+    make_sim_vs_e2e_chart()
